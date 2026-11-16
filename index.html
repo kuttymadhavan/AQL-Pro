@@ -3921,9 +3921,11 @@ async function saveInspectionRecord(inspection) {
     try {
       await db.open();
       let blockedError = null;
+      let existingRecord = null;
 
       await db.transaction('rw', db.inspections, db.media, async () => {
         const existing = await db.inspections.get(normalizedMeta.id);
+        existingRecord = existing;
         if (!isReleasedMutationAllowed(existing, normalizedMeta)) {
           blockedError = 'RELEASED audit is locked and immutable. Use Formal Amendment instead.';
           return;
@@ -3978,7 +3980,7 @@ async function saveInspectionRecord(inspection) {
       });
 
       if (blockedError) {
-        return { ok: false, locked: true, error: blockedError, inspection: attachMemoryUrls(existing, memoryUrls) };
+        return { ok: false, locked: true, error: blockedError, inspection: attachMemoryUrls(existingRecord, memoryUrls) };
       }
 
       lastStorageError = null;
